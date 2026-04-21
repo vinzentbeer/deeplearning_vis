@@ -21,7 +21,9 @@ def train(args):
     # Implement this function so that it trains a specific model as described in the instruction.md file
     # feel free to change the code snippets given here, they are just to give you an initial structure
     # but do not have to be used if you want to do it differently
-    # For device handling you can take a look at pytorch documentation
+    # For device handling you can take a look at pytorch documentation 
+
+    
 
     train_transform = v2.Compose(
         [
@@ -40,10 +42,16 @@ def train(args):
     )
 
     # Use config.py for all machine-dependent paths, e.g. DATA_DIR.
-    train_data = CIFAR10Dataset(DATA_DIR, ...)
-    val_data = ...
+    train_data = CIFAR10Dataset(DATA_DIR, Subset.TRAINING, transform=train_transform)
+    val_data = CIFAR10Dataset(DATA_DIR, Subset.VALIDATION, transform=val_transform)
+    test_data = CIFAR10Dataset(DATA_DIR, Subset.TEST, transform=val_transform)
 
-    device = ...
+
+    # print first 10 training label classes as dbg 
+    print("First 10 training label classes:", train_data.labels[:10])
+
+    print(train_data.num_classes())
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = DeepClassifier(...)
     model.to(device)

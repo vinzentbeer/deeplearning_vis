@@ -55,14 +55,47 @@ class CIFAR10Dataset(ClassificationDataset):
 
         # TODO implement
         # See the CIFAR-10 website on how to load the data files
-        pass
+
+        def unpickle(file):
+            
+            with open(file, 'rb') as fo:
+                dict = pickle.load(fo, encoding='bytes')
+            return dict
+        if self.subset == Subset.TRAINING:
+            images = []
+            labels = []
+            for i in range(1, 5):
+                data_dict = unpickle(f"{self.fdir}/data_batch_{i}")
+                images.append(data_dict[b'data'])
+                labels.append(data_dict[b'labels'])
+            images = np.concatenate(images)
+            labels = np.concatenate(labels)
+        elif self.subset == Subset.VALIDATION:
+            data_dict = unpickle(f"{self.fdir}/data_batch_5")
+            images = data_dict[b'data']
+            labels = data_dict[b'labels']
+        elif self.subset == Subset.TEST:
+            data_dict = unpickle(f"{self.fdir}/test_batch")
+            images = data_dict[b'data']
+            labels = data_dict[b'labels']
+        else:
+            raise ValueError("Invalid subset")
+        #print current shape as debug 
+        print(f"Loaded {len(labels)} images and labels for subset {self.subset.name}")
+        # print shape before 
+        print(f"Shape of images before reshaping: {images.shape}")
+         # print datatypes 
+        print(f"Data type of images: {images.dtype}")
+        print(f"Data type of labels: {type(labels)}")
+        images = images.reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # Reshape and convert to RGB
+        print(f"Shape of images after reshaping: {images.shape}")
+        return images, labels
 
     def __len__(self) -> int:
         """
         Returns the number of samples in the dataset.
         """
-        # TODO implement
-        pass
+        return len(self.labels)
 
     def __getitem__(self, idx: int) -> Tuple:
         """
@@ -71,12 +104,17 @@ class CIFAR10Dataset(ClassificationDataset):
         Applies transforms if not None.
         Raises IndexError if the index is out of bounds.
         """
-        # TODO implement
-        pass
+        if idx < 0 or idx >= len(self):
+            raise IndexError("Index out of bounds")
+        image = self.images[idx]
+        label = self.labels[idx]
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, label
 
     def num_classes(self) -> int:
         """
         Returns the number of classes.
         """
         # TODO implement
-        pass
+        return len(self.classes)

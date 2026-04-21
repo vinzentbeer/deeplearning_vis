@@ -7,7 +7,7 @@ import numpy as np
 
 from assignment_1_code.datasets.cifar10 import CIFAR10Dataset
 from assignment_1_code.datasets.dataset import Subset
-
+from config import DATA_DIR, MODEL_SAVE_DIR
 
 def imshow(img):
     npimg = img.numpy()
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     transform = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
 
     train_data = CIFAR10Dataset(
-        fdir="your_path_to_the_dataset", subset=Subset.TRAINING, transform=transform
+        fdir=DATA_DIR, subset=Subset.TRAINING, transform=transform
     )
     train_data_loader = torch.utils.data.DataLoader(
         train_data, batch_size=8, shuffle=False, num_workers=2
@@ -44,5 +44,8 @@ if __name__ == "__main__":
 
     # show images
     imshow(torchvision.utils.make_grid(images))
+    # Make sure that the color channels are in RGB order by displaying the images and verifying the colors are correct (e.g. with matpltolib.pyplot.imsave)
+    npimg = torchvision.utils.make_grid(images).numpy()
+    plt.imsave("test_1.png", np.transpose(npimg, (1, 2, 0)))
     # print labels
     print(" ".join(f"{classes[labels[j]]:5s}" for j in range(8)))
