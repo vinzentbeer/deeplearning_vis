@@ -1,2 +1,5 @@
 assignments/assignment_1/data/*
 .idea/
+*.DS_Store
+__pycache__/
+*.pyc
