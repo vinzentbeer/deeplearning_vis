@@ -4,4 +4,11 @@ assignments/assignment_1/data/*
 *.DS_Store
 __pycache__/
 *.pyc
-dlvc_venv/
+.env
+.venv/
+data/
+wandb/
+saved_models/
+img/
+*.log
+*.png

@@ -5,7 +5,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 # for wandb users:
-#from assignment_1_code.wandb_logger import WandBLogger
+from assignment_1_code.wandb_logger import WandBLogger
 
 
 class BaseTrainer(metaclass=ABCMeta):
@@ -83,10 +83,33 @@ class ImgClassificationTrainer(BaseTrainer):
 
         """
 
-        ## TODO implement
+        self.model = model
+        self.optimizer = optimizer
+        self.loss_fn = loss_fn
+        self.lr_scheduler = lr_scheduler
+        self.train_metric = train_metric
+        self.val_metric = val_metric
+        self.train_data = train_data
+        self.val_data = val_data
+        self.device = device
+        self.num_epochs = num_epochs
+        self.training_save_dir = training_save_dir
+        self.batch_size = batch_size
+        self.val_frequency = val_frequency
+
+        self.train_data_loader = torch.utils.data.DataLoader(
+            self.train_data, batch_size=self.batch_size, shuffle=True, num_workers=2
+        )
+        
+        self.val_data_loader = torch.utils.data.DataLoader(
+            self.val_data, batch_size=self.batch_size, shuffle=False, num_workers=2
+        )
+
+        self.wandb_logger = WandBLogger()
+
         pass
 
-    def _train_epoch(self, epoch_idx: int) -> Tuple[float, float, float]:
+    def _train_epoch(self, epoch_idx: int, debug:bool=False) -> Tuple[float, float, float]:
         """
         Training logic for one epoch.
         Prints current metrics at end of epoch.
@@ -95,6 +118,35 @@ class ImgClassificationTrainer(BaseTrainer):
         epoch_idx (int): Current epoch number
         """
         ## TODO implement
+        # Hint: you can use tqdm to have a progress bar for the training loop, e.g.:
+        # for batch in tqdm(self.train_data_loader, desc=f"Epoch {epoch_idx}"):
+
+        
+
+        self.model.train()
+        train_loss = 0.0
+        correct = 0
+        total = 0
+        class_correct = torch.zeros(self.num_classes, device=self.device)
+        class_total   = torch.zeros(self.num_classes, device=self.device)
+
+
+        for inputs, targets in self.train_data_loader:
+            inputs, targets = inputs.to(self.device), targets.to(self.device)
+
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            loss = self.loss_fn(outputs, targets)
+            loss.backward()
+
+            self.optimizer.step()
+            train_loss += loss.item()
+            
+            print("loss = " + loss.item())
+
+        
+
+
         pass
 
     def _val_epoch(self, epoch_idx: int) -> Tuple[float, float, float]:

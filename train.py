@@ -24,7 +24,7 @@ def train(args):
     # For device handling you can take a look at pytorch documentation 
 
     
-
+    
     train_transform = v2.Compose(
         [
             v2.ToImage(),
@@ -40,6 +40,11 @@ def train(args):
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
+
+    #print debug path
+    print(f"Using data directory: {DATA_DIR}")
+    #print resolved path
+    print(f"Resolved data directory: {DATA_DIR.resolve()}")
 
     # Use config.py for all machine-dependent paths, e.g. DATA_DIR.
     train_data = CIFAR10Dataset(DATA_DIR, Subset.TRAINING, transform=train_transform)

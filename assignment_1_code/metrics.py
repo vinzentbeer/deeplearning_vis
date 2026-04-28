@@ -76,9 +76,17 @@ class Accuracy(PerformanceMeasure):
             raise ValueError(f"target values must be between 0 and {len(self.classes)-1}, but target has values between {torch.min(target)} and {torch.max(target)}")
         
         #update measure
+        _, predicted = torch.max(prediction.data, 1)
+        for pred, targ in zip(predicted, target):
+            pred_class = self.classes[pred.item()]
+            targ_class = self.classes[targ.item()]
 
+            self.n_total += 1
+            self.total_pred[pred_class] += 1
 
-        pass
+            if pred_class == targ_class:
+                self.correct_pred[pred_class] += 1
+                self.n_matching += 1
 
     def __str__(self):
         """
@@ -88,16 +96,22 @@ class Accuracy(PerformanceMeasure):
         - individual per-class accuracies for all classes
         """
 
-        # TODO implement
-        pass
+        lines = []
+        lines.append(f"Overall Accuracy: {self.accuracy():.4f}")
+        lines.append(f"Mean Per-Class Accuracy: {self.per_class_accuracy():.4f}")
+        lines.append("Per-Class Accuracies:")
+        for classname in self.classes:
+            acc = self.per_class_accuracies.get(classname, 0.0)
+            lines.append(f"  {classname}: {acc:.4f}")
+        return "\n".join(lines) 
+
 
     def accuracy(self) -> float:
         """
         Compute and return the accuracy as a float between 0 and 1.
         Returns 0 if no data is available (after resets).
         """
-
-        # compute accuracy
+        
         if self.n_total == 0:
             return 0.0
         return self.n_matching / self.n_total
