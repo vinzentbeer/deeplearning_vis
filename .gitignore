@@ -1,5 +1,7 @@
 assignments/assignment_1/data/*
 .idea/
+.vscode/
 *.DS_Store
 __pycache__/
 *.pyc
+dlvc_venv/
