@@ -63,7 +63,21 @@ class Accuracy(PerformanceMeasure):
         [len(prediction.shape) should be equal to 2, and len(target.shape) should be equal to 1.]
         """
 
-        # TODO implement
+        # validate input
+        if len(prediction.shape) != 2:
+            raise ValueError(f"prediction must have shape (batchsize,n_classes), but has shape {prediction.shape}")
+        if len(target.shape) != 1:
+            raise ValueError(f"target must have shape (batchsize,), but has shape {target.shape}")
+        if prediction.shape[0] != target.shape[0]:
+            raise ValueError(f"prediction and target must have the same batchsize, but have batchsize {prediction.shape[0]} and {target.shape[0]}")
+        if prediction.shape[1] != len(self.classes):
+            raise ValueError(f"prediction must have n_classes={len(self.classes)} columns, but has {prediction.shape[1]} columns")
+        if not torch.all((target >= 0) & (target < len(self.classes))):
+            raise ValueError(f"target values must be between 0 and {len(self.classes)-1}, but target has values between {torch.min(target)} and {torch.max(target)}")
+        
+        #update measure
+
+
         pass
 
     def __str__(self):
@@ -83,8 +97,10 @@ class Accuracy(PerformanceMeasure):
         Returns 0 if no data is available (after resets).
         """
 
-        # TODO implement
-        pass
+        # compute accuracy
+        if self.n_total == 0:
+            return 0.0
+        return self.n_matching / self.n_total
 
     def per_class_accuracy(self) -> float:
         """
@@ -92,5 +108,20 @@ class Accuracy(PerformanceMeasure):
         Returns 0 if no data is available (after resets).
         Saves the individual per-class accuracies in self.per_class_accuracies as a dict mapping class name to accuracy.
         """
-        # TODO implement
-        pass
+        if self.n_total == 0:
+            return 0.0
+        
+        valid_classes = 0
+        for classname in self.classes:
+            if self.total_pred[classname] == 0:
+                self.per_class_accuracies[classname] = 0.0
+            else:
+                self.per_class_accuracies[classname] = self.correct_pred[classname] / self.total_pred[classname]
+                valid_classes += 1
+        
+        if valid_classes == 0:
+            return 0.0
+        
+        return sum(self.per_class_accuracies.values()) / valid_classes
+
+
