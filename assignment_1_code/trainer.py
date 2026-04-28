@@ -125,13 +125,9 @@ class ImgClassificationTrainer(BaseTrainer):
 
         self.model.train()
         train_loss = 0.0
-        correct = 0
-        total = 0
-        class_correct = torch.zeros(self.num_classes, device=self.device)
-        class_total   = torch.zeros(self.num_classes, device=self.device)
 
-
-        for inputs, targets in self.train_data_loader:
+        # https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
+        for inputs, targets in self.train_data_loader: 
             inputs, targets = inputs.to(self.device), targets.to(self.device)
 
             self.optimizer.zero_grad()
@@ -142,12 +138,13 @@ class ImgClassificationTrainer(BaseTrainer):
             self.optimizer.step()
             train_loss += loss.item()
             
-            print("loss = " + loss.item())
+            if(debug):
+                print("loss = " + loss.item())
+            
+            self.train_metric.update(outputs, targets)
 
-        
-
-
-        pass
+        print(self.train_metric)
+        return train_loss, self.train_metric.accuracy(), self.train_metric.per_class_accuracy()
 
     def _val_epoch(self, epoch_idx: int) -> Tuple[float, float, float]:
         """
@@ -157,7 +154,27 @@ class ImgClassificationTrainer(BaseTrainer):
 
         epoch_idx (int): Current epoch number
         """
-        ## TODO implement
+        
+        self.model.eval()
+        val_loss = 0.0
+
+        # https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
+        with torch.no_grad():
+            for inputs, targets in self.val_data_loader: 
+                inputs, targets = inputs.to(self.device), targets.to(self.device)
+
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.loss_fn(outputs, targets)
+                loss.backward()
+
+                self.optimizer.step()
+                val_loss += loss.item()
+                
+                self.val_metric.update(outputs, targets)
+
+        print(self.val_metric)
+        return val_loss, self.val_metric.accuracy(), self.val_metric.per_class_accuracy()        
         pass
 
     def train(self) -> None:
@@ -169,4 +186,18 @@ class ImgClassificationTrainer(BaseTrainer):
         Depending on the val_frequency parameter, validation is not performed every epoch.
         """
         ## TODO implement
+
+        for epoch in range(self.num_epochs):
+            train_loss, train_acc, train_pcacc = self._train_epoch(epoch)
+            print(f"Epoch {epoch} - Train Loss: {train_loss}, Train Acc: {train_acc}, Train PCAcc: {train_pcacc}")
+
+            if epoch % self.val_frequency == 0:
+                val_loss, val_acc, val_pcacc = self._val_epoch(epoch)
+                print(f"Epoch {epoch} - Val Loss: {val_loss}, Val Acc: {val_acc}, Val PCAcc: {val_pcacc}")
+
+                # Save the model if mean per class accuracy on validation data set is higher than currently saved best mean per class accuracy.
+                # You can use torch.save() to save the model and torch.load() to load it.
+                # Make sure to save the model in the training_save_dir folder and give it a meaningful name, e.g. "best_model.pth".
         pass
+
+
