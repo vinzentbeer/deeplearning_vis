@@ -3,6 +3,7 @@ from typing import Tuple
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from tqdm import tqdm
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 # for wandb users:
 from assignment_1_code.wandb_logger import WandBLogger
@@ -98,14 +99,17 @@ class ImgClassificationTrainer(BaseTrainer):
         self.val_frequency = val_frequency
 
         self.train_data_loader = torch.utils.data.DataLoader(
-            self.train_data, batch_size=self.batch_size, shuffle=True, num_workers=2
+            self.train_data, batch_size=self.batch_size, shuffle=True, num_workers=0
         )
         
         self.val_data_loader = torch.utils.data.DataLoader(
-            self.val_data, batch_size=self.batch_size, shuffle=False, num_workers=2
+            self.val_data, batch_size=self.batch_size, shuffle=False, num_workers=0
         )
 
-        self.wandb_logger = WandBLogger()
+        self.wandb_logger = WandBLogger(enabled=False)
+        self.best_val_pcacc = float("-inf")
+
+        self.training_save_dir.mkdir(parents=True, exist_ok=True)
 
         pass
 
@@ -121,13 +125,12 @@ class ImgClassificationTrainer(BaseTrainer):
         # Hint: you can use tqdm to have a progress bar for the training loop, e.g.:
         # for batch in tqdm(self.train_data_loader, desc=f"Epoch {epoch_idx}"):
 
-        
-
         self.model.train()
+        self.train_metric.reset()
         train_loss = 0.0
 
         # https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
-        for inputs, targets in self.train_data_loader: 
+        for inputs, targets in tqdm(self.train_data_loader, desc=f"Epoch {epoch_idx} - train"):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
 
             self.optimizer.zero_grad()
@@ -139,12 +142,12 @@ class ImgClassificationTrainer(BaseTrainer):
             train_loss += loss.item()
             
             if(debug):
-                print("loss = " + loss.item())
+                print(f"loss = {loss.item():.4f}")
             
             self.train_metric.update(outputs, targets)
 
         print(self.train_metric)
-        return train_loss, self.train_metric.accuracy(), self.train_metric.per_class_accuracy()
+        return train_loss / max(1, len(self.train_data_loader)), self.train_metric.accuracy(), self.train_metric.per_class_accuracy()
 
     def _val_epoch(self, epoch_idx: int) -> Tuple[float, float, float]:
         """
@@ -156,26 +159,22 @@ class ImgClassificationTrainer(BaseTrainer):
         """
         
         self.model.eval()
+        self.val_metric.reset()
         val_loss = 0.0
 
         # https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
         with torch.no_grad():
-            for inputs, targets in self.val_data_loader: 
+            for inputs, targets in tqdm(self.val_data_loader, desc=f"Epoch {epoch_idx} - val"):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
 
-                self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 loss = self.loss_fn(outputs, targets)
-                loss.backward()
-
-                self.optimizer.step()
                 val_loss += loss.item()
                 
                 self.val_metric.update(outputs, targets)
 
         print(self.val_metric)
-        return val_loss, self.val_metric.accuracy(), self.val_metric.per_class_accuracy()        
-        pass
+        return val_loss / max(1, len(self.val_data_loader)), self.val_metric.accuracy(), self.val_metric.per_class_accuracy()
 
     def train(self) -> None:
         """
@@ -191,13 +190,24 @@ class ImgClassificationTrainer(BaseTrainer):
             train_loss, train_acc, train_pcacc = self._train_epoch(epoch)
             print(f"Epoch {epoch} - Train Loss: {train_loss}, Train Acc: {train_acc}, Train PCAcc: {train_pcacc}")
 
-            if epoch % self.val_frequency == 0:
+            should_validate = ((epoch + 1) % self.val_frequency == 0) or (epoch == self.num_epochs - 1)
+            val_loss = None
+            if should_validate:
                 val_loss, val_acc, val_pcacc = self._val_epoch(epoch)
                 print(f"Epoch {epoch} - Val Loss: {val_loss}, Val Acc: {val_acc}, Val PCAcc: {val_pcacc}")
 
                 # Save the model if mean per class accuracy on validation data set is higher than currently saved best mean per class accuracy.
                 # You can use torch.save() to save the model and torch.load() to load it.
                 # Make sure to save the model in the training_save_dir folder and give it a meaningful name, e.g. "best_model.pth".
-        pass
+                if val_pcacc > self.best_val_pcacc:
+                    self.best_val_pcacc = val_pcacc
+                    self.model.save(self.training_save_dir, suffix="best")
+
+            if self.lr_scheduler is not None:
+                if isinstance(self.lr_scheduler, ReduceLROnPlateau):
+                    if val_loss is not None:
+                        self.lr_scheduler.step(val_loss)
+                else:
+                    self.lr_scheduler.step()
 
 

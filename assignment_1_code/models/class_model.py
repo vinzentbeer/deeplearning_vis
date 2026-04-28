@@ -25,7 +25,6 @@ class DeepClassifier(nn.Module):
         Loads model from path
         Does not work with transfer model
         '''
-        self.load_state_dict(torch.load(path), weights_only=True)
+        state_dict = torch.load(path, map_location="cpu")
+        self.load_state_dict(state_dict)
         self.eval()
-        
-        pass

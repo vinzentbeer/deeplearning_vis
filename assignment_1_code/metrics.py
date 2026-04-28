@@ -52,7 +52,7 @@ class Accuracy(PerformanceMeasure):
         self.total_pred = {classname: 0 for classname in self.classes}
         self.n_matching = 0  # number of correct predictions
         self.n_total = 0
-        self.per_class_accuracies = ...  # dict mapping class name to accuracy
+        self.per_class_accuracies = {classname: 0.0 for classname in self.classes}  # dict mapping class name to accuracy
 
     def update(self, prediction: torch.Tensor, target: torch.Tensor) -> None:
         """
