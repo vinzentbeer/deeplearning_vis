@@ -25,6 +25,9 @@ class DeepClassifier(nn.Module):
         Loads model from path
         Does not work with transfer model
         '''
-        state_dict = torch.load(path, map_location="cpu")
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #this is hacky and i dont know whether harcdocing cpu here would be fine
+
+        state_dict = torch.load(path, map_location=device)
         self.load_state_dict(state_dict)
         self.eval()
