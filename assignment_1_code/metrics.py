@@ -82,10 +82,10 @@ class Accuracy(PerformanceMeasure):
             targ_class = self.classes[targ.item()]
 
             self.n_total += 1
-            self.total_pred[pred_class] += 1
+            self.total_pred[targ_class] += 1
 
             if pred_class == targ_class:
-                self.correct_pred[pred_class] += 1
+                self.correct_pred[targ_class] += 1
                 self.n_matching += 1
 
     def __str__(self):

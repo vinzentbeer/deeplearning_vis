@@ -1,6 +1,7 @@
-def main():
-    print("Hello from deeplearning-vis!")
+import torch 
 
-
-if __name__ == "__main__":
-    main()
+# Check if CUDA is available
+if torch.cuda.is_available():
+    print("CUDA is available. PyTorch can use the GPU.")
+else:
+    print("CUDA is not available. PyTorch will use the CPU.")

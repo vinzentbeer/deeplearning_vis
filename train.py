@@ -61,7 +61,8 @@ def train(args):
 
     model = DeepClassifier(resnet18(weights=None, num_classes=train_data.num_classes()))
     model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) #parameterize lr later
+    #optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) #parameterize lr later
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, amsgrad=True) 
     loss_fn = torch.nn.CrossEntropyLoss()
 
     train_metric = Accuracy(classes=train_data.classes)
@@ -71,7 +72,8 @@ def train(args):
     model_save_dir = Path(MODEL_SAVE_DIR)
     model_save_dir.mkdir(exist_ok=True)
 
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) #parameterize step_size and gamma later
+    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) #parameterize step_size and gamma later
+    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9) 
 
     trainer = ImgClassificationTrainer(
         model,
@@ -102,6 +104,6 @@ if __name__ == "__main__":
         args = args.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.num_epochs = 3
+    args.num_epochs = 8
 
     train(args)

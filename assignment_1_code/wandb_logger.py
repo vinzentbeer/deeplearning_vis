@@ -7,7 +7,10 @@ import os
 
 
 load_dotenv()
-wandb.login(key=os.getenv("WANDB_API_KEY"))
+try:
+    wandb.login(key=os.getenv("WANDB_API_KEY"))
+except Exception:
+    pass  # hacky workaround until we actually enable it
 
 class WandBLogger:
 
