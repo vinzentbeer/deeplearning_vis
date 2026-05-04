@@ -20,10 +20,6 @@ from config import DATA_DIR, MODEL_SAVE_DIR
 from torchvision.models import resnet18
 from datetime import datetime
 
-USE_RESNET = False
-USE_CNN = False
-USE_VIT = True
-
 def create_run_name(model_name, optimizer_name, lr, scheduler_name, num_epochs, batch_size=None):
     """
     Create a descriptive run name from hyperparameters.
@@ -83,30 +79,20 @@ def train(args):
     #print selected device
     print(f"Using device: {device}")
 
-
-    if USE_RESNET:
-        model = DeepClassifier(resnet18(weights=None, num_classes=train_data.num_classes()))
-        lr = 1e-3
-    elif USE_CNN:
-        model = DeepClassifier(YourCNN(in_channels=3, num_classes=train_data.num_classes()))
-        lr = 1e-3
-    elif USE_VIT:
-        model = DeepClassifier(
-            VisionTransformer(
-                embed_dim=256,
-                hidden_dim=512,
-                num_heads=8,
-                num_layers=6,
-                patch_size=4,
-                num_patches=64,
-                num_channels=3,
-                num_classes=train_data.num_classes(),
-                dropout=0.2,
-            )
+    model = DeepClassifier(
+        VisionTransformer(
+            embed_dim=256,
+            hidden_dim=512,
+            num_heads=8,
+            num_layers=6,
+            patch_size=4,
+            num_patches=64,
+            num_channels=3,
+            num_classes=train_data.num_classes(),
+            dropout=0.2,
         )
-        lr = 3e-4 #according to tutorial for the vit
-    else:
-        raise ValueError("No model selected. Set one of USE_RESNET, USE_CNN, or USE_VIT to True.")
+    )
+    lr = 3e-4 #according to tutorial for the vit
 
     model.to(device)
     
@@ -127,16 +113,8 @@ def train(args):
     scheduler_name = "multistep=0.1"
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100, 150], gamma=0.1)
     
-    # Determine model name from flags
-    if USE_RESNET:
-        model_name = "ResNet18"
-    elif USE_CNN:
-        model_name = "CNN"
-    elif USE_VIT:
-        model_name = "ViT"
-    else:
-        model_name = "Unknown"
-    
+    model_name = "ViT"
+   
     # Create W&B run name from hyperparameters
     run_name = create_run_name(
         model_name=model_name,
