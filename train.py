@@ -10,12 +10,16 @@ from assignment_1_code.models.class_model import (
     DeepClassifier,
 )  # etc. change to your model
 from assignment_1_code.metrics import Accuracy
+from assignment_1_code.models.cnn import YourCNN
 from assignment_1_code.trainer import ImgClassificationTrainer
 from assignment_1_code.datasets.cifar10 import CIFAR10Dataset
 from assignment_1_code.datasets.dataset import Subset
 from config import DATA_DIR, MODEL_SAVE_DIR
 
 from torchvision.models import resnet18
+
+USE_RESNET = False
+USE_CNN = True
 
 def train(args):
 
@@ -59,7 +63,12 @@ def train(args):
     print(train_data.num_classes())
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = DeepClassifier(resnet18(weights=None, num_classes=train_data.num_classes()))
+    if(USE_RESNET):
+        
+        model = DeepClassifier(resnet18(weights=None, num_classes=train_data.num_classes()))
+    elif(USE_CNN):
+        model = DeepClassifier(YourCNN(in_channels=3, num_classes=train_data.num_classes()))
+
     model.to(device)
     #optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) #parameterize lr later
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, amsgrad=True) 
