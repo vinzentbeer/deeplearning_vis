@@ -38,10 +38,9 @@ def train(args):
             v2.ToDtype(torch.float32, scale=True),
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             v2.RandomHorizontalFlip(),
-            v2.RandomCrop(size=32, padding=4),
+            v2.RandomCrop(size=32, padding=4), #the images are already small... so stuff like sharpness doesnt make sense.
             #v2.RandomAutocontrast(),
-            #v2.RandomAdjustSharpness(sharpness_factor=2.0),
-            #v2.RandomRotation(degrees=15),
+            #v2.RandomRotation(degrees=15), #uncomment later for the report as an experiment
         ]
     )
 
@@ -138,6 +137,6 @@ if __name__ == "__main__":
         args = args.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.num_epochs = 20
+    args.num_epochs = 30
 
     train(args)

@@ -54,13 +54,13 @@ class SimpleCNN(nn.Module):
 class YourCNN(nn.Module):
     def __init__(self, in_channels = 3, num_classes = 10):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, 8, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv3 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(32 * 4 * 4, 256)
+        self.fc1 = nn.Linear(128 * 4 * 4, 256)
         self.dropout = nn.Dropout(0.3)
         self.fc2 = nn.Linear(256, num_classes)
 
