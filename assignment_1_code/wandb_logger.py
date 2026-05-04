@@ -8,9 +8,11 @@ import os
 
 load_dotenv()
 try:
-    wandb.login(key=os.getenv("WANDB_API_KEY"))
-except Exception:
-    pass  # hacky workaround until we actually enable it
+    logged_in = wandb.login(key=os.getenv("WANDB_API_KEY"))
+    print("Logged into W&B successfully with: " + os.getenv("WANDB_API_KEY"), logged_in)
+except Exception as e:
+    print("W&B login failed:", e)
+    raise
 
 class WandBLogger:
 
@@ -20,11 +22,9 @@ class WandBLogger:
         
         self.enabled = enabled
 
-
-
         if self.enabled:
-            wandb.init(entity="your entity",
-                        project="your project",
+            wandb.init(entity="klemens-wiesinger-tu-wien",
+                        project="DLVC-ass1",
                         group="your run group")
             if run_name is None:
                 wandb.run.name = wandb.run.id    

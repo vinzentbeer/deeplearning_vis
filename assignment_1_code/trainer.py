@@ -59,6 +59,7 @@ class ImgClassificationTrainer(BaseTrainer):
         training_save_dir: Path,
         batch_size: int = 4,
         val_frequency: int = 5,
+        run_name: str = None,
     ) -> None:
         """
         Args and Kwargs:
@@ -106,7 +107,8 @@ class ImgClassificationTrainer(BaseTrainer):
             self.val_data, batch_size=self.batch_size, shuffle=False, num_workers=0
         )
 
-        self.wandb_logger = WandBLogger(enabled=False)
+        # Enable W&B logging if run_name is provided
+        self.wandb_logger = WandBLogger(enabled=(run_name is not None), run_name=run_name)
         self.best_val_pcacc = float("-inf")
 
         self.training_save_dir.mkdir(parents=True, exist_ok=True)
@@ -189,12 +191,24 @@ class ImgClassificationTrainer(BaseTrainer):
         for epoch in range(self.num_epochs):
             train_loss, train_acc, train_pcacc = self._train_epoch(epoch)
             print(f"Epoch {epoch} - Train Loss: {train_loss}, Train Acc: {train_acc}, Train PCAcc: {train_pcacc}")
+            
+            metrics = {
+                'epoch': epoch,
+                'train_loss': train_loss,
+                'train_accuracy': train_acc,
+                'train_per_class_accuracy': train_pcacc,
+            }
 
             should_validate = ((epoch + 1) % self.val_frequency == 0) or (epoch == self.num_epochs - 1)
-            val_loss = None
             if should_validate:
                 val_loss, val_acc, val_pcacc = self._val_epoch(epoch)
                 print(f"Epoch {epoch} - Val Loss: {val_loss}, Val Acc: {val_acc}, Val PCAcc: {val_pcacc}")
+
+                metrics.update({
+                    'val_loss': val_loss,
+                    'val_accuracy': val_acc,
+                    'val_per_class_accuracy': val_pcacc,
+                })
 
                 # Save the model if mean per class accuracy on validation data set is higher than currently saved best mean per class accuracy.
                 # You can use torch.save() to save the model and torch.load() to load it.
@@ -203,11 +217,17 @@ class ImgClassificationTrainer(BaseTrainer):
                     self.best_val_pcacc = val_pcacc
                     self.model.save(self.training_save_dir, suffix="best")
 
+            # Log metrics for this epoch once, after train and optional validation are complete.
+            self.wandb_logger.log(metrics, step=epoch)
+
             if self.lr_scheduler is not None:
                 if isinstance(self.lr_scheduler, ReduceLROnPlateau):
                     if val_loss is not None:
                         self.lr_scheduler.step(val_loss)
                 else:
                     self.lr_scheduler.step()
+        
+        # Finish W&B logging
+        self.wandb_logger.finish()
 
 

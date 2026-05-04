@@ -18,10 +18,21 @@ from assignment_1_code.datasets.dataset import Subset
 from config import DATA_DIR, MODEL_SAVE_DIR
 
 from torchvision.models import resnet18
+from datetime import datetime
 
 USE_RESNET = False
 USE_CNN = False
 USE_VIT = True
+
+def create_run_name(model_name, optimizer_name, lr, scheduler_name, num_epochs, batch_size=None):
+    """
+    Create a descriptive run name from hyperparameters.
+    Example: CNN_adamw_lr1e-03_exponential_20ep_bs128
+    """
+    name = f"{model_name}_{optimizer_name}_lr{lr:.0e}_{scheduler_name}_{num_epochs}ep"
+    if batch_size:
+        name += f"_bs{batch_size}"
+    return name
 
 def train(args):
 
@@ -61,14 +72,17 @@ def train(args):
     # Use config.py for all machine-dependent paths, e.g. DATA_DIR.
     train_data = CIFAR10Dataset(DATA_DIR, Subset.TRAINING, transform=train_transform)
     val_data = CIFAR10Dataset(DATA_DIR, Subset.VALIDATION, transform=val_transform)
-    test_data = CIFAR10Dataset(DATA_DIR, Subset.TEST, transform=val_transform)
-
+    #test_data = CIFAR10Dataset(DATA_DIR, Subset.TEST, transform=val_transform)
 
     # print first 10 training label classes as dbg 
     print("First 10 training label classes:", train_data.labels[:10])
 
     print(train_data.num_classes())
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #print selected device
+    print(f"Using device: {device}")
+
 
     if USE_RESNET:
         model = DeepClassifier(resnet18(weights=None, num_classes=train_data.num_classes()))
@@ -95,19 +109,43 @@ def train(args):
         raise ValueError("No model selected. Set one of USE_RESNET, USE_CNN, or USE_VIT to True.")
 
     model.to(device)
-    #optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) #parameterize lr later
+    
+    # Optimizer configuration
+    optimizer_name = "adamw"
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, amsgrad=True) 
     loss_fn = torch.nn.CrossEntropyLoss()
 
     train_metric = Accuracy(classes=train_data.classes)
     val_metric = Accuracy(classes=val_data.classes)
     val_frequency = 5
+    batch_size = 128
 
     model_save_dir = Path(MODEL_SAVE_DIR)
     model_save_dir.mkdir(exist_ok=True)
 
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) #parameterize step_size and gamma later
+    # Learning rate scheduler configuration
+    scheduler_name = "exponential=0.9"
     lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9) 
+    
+    # Determine model name from flags
+    if USE_RESNET:
+        model_name = "ResNet18"
+    elif USE_CNN:
+        model_name = "CNN"
+    elif USE_VIT:
+        model_name = "ViT"
+    else:
+        model_name = "Unknown"
+    
+    # Create W&B run name from hyperparameters
+    run_name = create_run_name(
+        model_name=model_name,
+        optimizer_name=optimizer_name,
+        lr=lr,
+        scheduler_name=scheduler_name,
+        num_epochs=args.num_epochs,
+        batch_size=batch_size
+    )
 
     trainer = ImgClassificationTrainer(
         model,
@@ -121,8 +159,9 @@ def train(args):
         device,
         args.num_epochs,
         model_save_dir,
-        batch_size=128,  # feel free to change
+        batch_size=batch_size,
         val_frequency=val_frequency,
+        run_name=run_name,
     )
     trainer.train()
 
@@ -138,6 +177,6 @@ if __name__ == "__main__":
         args = args.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.num_epochs = 20
+    args.num_epochs = 40
 
     train(args)
