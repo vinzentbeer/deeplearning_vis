@@ -50,7 +50,7 @@ class SimpleCNN(nn.Module):
     def forward(self, x):
         return self.classifier(self.features(x))
 
-    
+# added a layer of conv and one fully connected one and dropout, but that didn't really push accuracy.
 class YourCNN(nn.Module):
     def __init__(self, in_channels = 3, num_classes = 10):
         super().__init__()
