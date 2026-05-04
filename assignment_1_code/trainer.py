@@ -98,6 +98,7 @@ class ImgClassificationTrainer(BaseTrainer):
         self.training_save_dir = training_save_dir
         self.batch_size = batch_size
         self.val_frequency = val_frequency
+        self.run_name = run_name
 
         self.train_data_loader = torch.utils.data.DataLoader(
             self.train_data, batch_size=self.batch_size, shuffle=True, num_workers=0
@@ -215,7 +216,7 @@ class ImgClassificationTrainer(BaseTrainer):
                 # Make sure to save the model in the training_save_dir folder and give it a meaningful name, e.g. "best_model.pth".
                 if val_pcacc > self.best_val_pcacc:
                     self.best_val_pcacc = val_pcacc
-                    self.model.save(self.training_save_dir, suffix="best")
+                    self.model.save(self.training_save_dir, suffix="best" + self.run_name if self.run_name else "best")
 
             # Log metrics for this epoch once, after train and optional validation are complete.
             self.wandb_logger.log(metrics, step=epoch)
