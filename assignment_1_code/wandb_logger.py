@@ -2,17 +2,19 @@ import torch
 import wandb
 from typing import Dict
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import os
-
-
-load_dotenv()
 try:
     logged_in = wandb.login(key=os.getenv("WANDB_API_KEY"))
     print("Logged into W&B successfully with: " + os.getenv("WANDB_API_KEY"), logged_in)
 except Exception as e:
     print("W&B login failed:", e)
-    raise
+    print("Training will continue without W&B logging")
 
 class WandBLogger:
 
