@@ -20,7 +20,7 @@ from config import DATA_DIR, MODEL_SAVE_DIR
 from torchvision.models import resnet18
 from datetime import datetime
 
-def create_run_name(model_name, optimizer_name, lr, scheduler_name, num_epochs, batch_size=None):
+def create_run_name(model_name, optimizer_name, lr, scheduler_name, num_epochs, batch_size=None, transform_str=None):
     """
     Create a descriptive run name from hyperparameters.
     Example: CNN_adamw_lr1e-03_exponential_20ep_bs128
@@ -28,6 +28,8 @@ def create_run_name(model_name, optimizer_name, lr, scheduler_name, num_epochs, 
     name = f"{model_name}_{optimizer_name}_lr{lr:.0e}_{scheduler_name}_{num_epochs}ep"
     if batch_size:
         name += f"_bs{batch_size}"
+    if transform_str:
+        name += f"_{transform_str}"
     return name
 
 def train(args):
@@ -51,6 +53,10 @@ def train(args):
             #v2.RandomRotation(degrees=15),
         ]
     )
+
+    # Create a string representation of the train transform for run name
+    transform_names = [type(t).__name__ for t in train_transform.transforms]
+    transform_str = "-".join(transform_names)
 
     val_transform = v2.Compose(
         [
@@ -110,7 +116,8 @@ def train(args):
         lr=lr,
         scheduler_name=scheduler_name,
         num_epochs=args.num_epochs,
-        batch_size=batch_size
+        batch_size=batch_size,
+        transform_str=transform_str
     )
 
     trainer = ImgClassificationTrainer(
