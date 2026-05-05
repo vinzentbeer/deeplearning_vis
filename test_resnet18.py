@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p",
         "--path_to_trained_model",
-        default=str(MODEL_SAVE_DIR / "model_bestResNet18_adamw_lr1e-03_exponential=0.9_30ep_bs128.pt"),
+        default=str(MODEL_SAVE_DIR / "model_bestResNet18_adamw-weight-decay-1_lr1e-03_exponential=0.9_40ep_bs128_ToImage-ToDtype-Normalize-RandomHorizontalFlip-RandomCrop.pt"),
         type=str,
         help="path to the saved model checkpoint",
     )
@@ -73,6 +73,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.path_to_trained_model = str(MODEL_SAVE_DIR / "model_bestResNet18_adamw_lr1e-03_exponential=0.9_30ep_bs128.pt")
+    args.path_to_trained_model = str(MODEL_SAVE_DIR / "model_bestResNet18_adamw-weight-decay-1_lr1e-03_exponential=0.9_40ep_bs128_ToImage-ToDtype-Normalize-RandomHorizontalFlip-RandomCrop.pt")
 
     test(args)

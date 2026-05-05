@@ -91,8 +91,8 @@ def train(args):
     model.to(device)
     
     # Optimizer configuration
-    optimizer_name = "adamw"
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, amsgrad=True) 
+    optimizer_name = "adamw-weight-decay-1"
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1, amsgrad=True) 
     loss_fn = torch.nn.CrossEntropyLoss()
 
     train_metric = Accuracy(classes=train_data.classes)
@@ -150,6 +150,6 @@ if __name__ == "__main__":
         args = args.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.num_epochs = 30
+    args.num_epochs = 40
 
     train(args)

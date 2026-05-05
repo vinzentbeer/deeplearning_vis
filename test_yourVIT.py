@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p",
         "--path_to_trained_model",
-        default=str(MODEL_SAVE_DIR / "model_bestViT_adamw_lr3e-04_multistep=0.1_30ep_bs128.pt"),
+        default=str(MODEL_SAVE_DIR / "model_bestViT_adamw_lr3e-04_multistep=0.1_40ep_bs128.pt"),
         type=str,
         help="path to the saved model checkpoint",
     )
@@ -86,6 +86,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
     args.gpu_id = 0
-    args.path_to_trained_model = str(MODEL_SAVE_DIR / "model_bestViT_adamw_lr3e-04_multistep=0.1_30ep_bs128.pt")
+    args.path_to_trained_model = str(MODEL_SAVE_DIR / "model_bestViT_adamw_lr3e-04_multistep=0.1_40ep_bs128.pt")
 
     test(args)
